@@ -11,10 +11,15 @@ Este proyecto implementa una aplicación segura y escalable desplegada en AWS, s
 - **Seguridad**: Configurado con conexión HTTPS/TLS para garantizar la integridad y confidencialidad de los datos
 - **Certificados**: Utiliza certificados SSL/TLS generados a través de Let's Encrypt
 
+![Apache Security Group](resources/35.png)
+
 #### Servidor 2: Spring Framework Server
 - **Función**: Servidor backend que proporciona servicios RESTful API
 - **Seguridad**: Protegido con TLS para comunicación segura cliente-servidor
 - **Autenticación**: Sistema de login con contraseñas almacenadas de forma segura mediante hashing
+
+![Apache Security Group](resources/36.png)
+
 
 ### Características de Seguridad Implementadas
 
@@ -36,6 +41,34 @@ https://pruebacorreoescuelaingeduco-my.sharepoint.com/:v:/g/personal/juan_brodri
 - Cuenta activa de AWS
 - Acceso a terminal/línea de comandos
 
+## Estructura del Proyecto
+
+```
+ArepSecureApplicationDesign/
+├── README.md                 # Documentación principal del proyecto
+├── resources/               # Imágenes y recursos de documentación
+│   ├── 1.png - 43.png      # Screenshots del proceso de configuración
+├── springserver/           # Aplicación Spring Boot backend
+│   ├── pom.xml            # Configuración Maven
+│   └── src/
+│       ├── main/java/com/arep/springserver/
+│       │   ├── App.java                    # Clase principal Spring Boot
+│       │   ├── controller/
+│       │   │   ├── AuthController.java     # Endpoints de autenticación
+│       │   │   └── SecureController.java   # Endpoints protegidos
+│       │   ├── model/
+│       │   │   └── User.java              # Modelo de datos usuario
+│       │   ├── repository/
+│       │   │   └── UserRepository.java    # Acceso a datos JPA
+│       │   ├── security/
+│       │   │   └── SecurityConfig.java    # Configuración de seguridad
+│       │   └── service/
+│       │       └── UserService.java       # Lógica de negocio
+│       └── resources/
+│           └── application.properties     # Configuración Spring Boot
+└── .gitignore              # Archivos excluidos del control de versiones
+```
+
 ## Instalación y Configuración
 
 ### 1. Clonación del Repositorio
@@ -45,7 +78,27 @@ git clone https://github.com/juan-beltran0518/ArepSecureApplicationDesign.git
 cd ArepSecureApplicationDesign
 ```
 
-### 2. Configuración de Grupos de Seguridad en AWS
+### 2. Ejecución Local del Proyecto Spring Boot
+
+Para probar el servidor Spring Boot localmente:
+
+```bash
+cd springserver
+mvn clean package -DskipTests
+java -jar target/*.jar
+```
+
+El servidor estará disponible en:
+- **HTTP**: `http://localhost:8080`
+- **HTTPS**: `https://localhost:8443` (requiere configuración SSL)
+
+#### Endpoints disponibles:
+- `POST /auth/register` - Registro de nuevos usuarios
+- `POST /auth/login` - Autenticación de usuarios
+- `GET /secure/data` - Endpoint protegido (requiere autenticación)
+- `GET /h2-console` - Consola de base de datos H2
+
+### 3. Configuración de Grupos de Seguridad en AWS
 
 Se requieren dos grupos de seguridad independientes para cada servidor:
 
@@ -55,7 +108,7 @@ Se requieren dos grupos de seguridad independientes para cada servidor:
 - HTTP: Cualquier IPv4 (0.0.0.0/0)
 - HTTPS: Cualquier IPv4 (0.0.0.0/0)
 
-![Apache Security Group](resources/1.png)
+![Apache Security Group](resources/38.png)
 
 #### SpringSecurityGroup
 **Reglas de entrada:**
@@ -64,7 +117,7 @@ Se requieren dos grupos de seguridad independientes para cada servidor:
 - HTTPS: Cualquier IPv4 (0.0.0.0/0)
 - Puerto 8443: Cualquier IPv4 (para Spring Boot HTTPS)
 
-![Spring Security Group](resources/2.png)
+![Spring Security Group](resources/37.png)
 
 ### 3. Creación de Instancias EC2
 
@@ -74,8 +127,9 @@ Se requieren dos grupos de seguridad independientes para cada servidor:
 - **Grupo de seguridad**: ApacheSecurityGroup
 - **Par de claves**: Crear nuevo par de claves
 
-![Apache Server Configuration](resources/3.png)
-![Apache Server Details](resources/4.png)
+![Apache Server Configuration](resources/1.png)
+![Apache Server Details](resources/39.png)
+![Apache Server Details](resources/41.png)
 
 #### Instancia Spring Server
 - **Tipo de instancia**: t2.micro
@@ -83,22 +137,19 @@ Se requieren dos grupos de seguridad independientes para cada servidor:
 - **Grupo de seguridad**: SpringSecurityGroup
 - **Par de claves**: Crear nuevo par de claves
 
-![Spring Server Configuration](resources/5.png)
-![Spring Server Details](resources/6.png)
-
+![Spring Server Configuration](resources/40.png)
 ### 4. Configuración DNS
 
 #### Obtención de IPs Públicas
 1. Copiar la IP pública de cada instancia desde la consola de AWS
 
-![Apache Server IP](resources/7.png)
-![Spring Server IP](resources/8.png)
+![Apache Server IP](resources/2.png)
 
 #### Configuración en DuckDNS
 1. Acceder a [DuckDNS](https://www.duckdns.org/domains)
 2. Vincular cada IP con un dominio personalizado
 
-![DNS Configuration](resources/9.png)
+![DNS Configuration](resources/3.png)
 
 #### Verificación DNS
 Verificar la resolución DNS desde terminal local:
@@ -108,7 +159,7 @@ nslookup appivanarep.duckdns.org
 nslookup springivanarep.duckdns.org
 ```
 
-![DNS Verification](resources/10.png)
+![DNS Verification](resources/4.png)
 
 ### 5. Configuración del Servidor Apache
 
@@ -118,7 +169,7 @@ nslookup springivanarep.duckdns.org
 ssh -i "apache-key.pem" ec2-user@[IP_PUBLICA_APACHE]
 ```
 
-![Apache SSH Connection](resources/11.png)
+![Apache SSH Connection](resources/9.png)
 
 #### Actualización del Sistema e Instalación de Apache
 
@@ -129,7 +180,7 @@ sudo systemctl enable --now httpd
 sudo systemctl status httpd
 ```
 
-![Apache Installation](resources/12.png)
+![Apache Installation](resources/19.png)
 
 #### Configuración de Permisos
 
@@ -140,7 +191,7 @@ sudo chmod 2775 /var/www && find /var/www -type d -exec sudo chmod 2775 {} \;
 find /var/www -type f -exec sudo chmod 0664 {} \;
 ```
 
-![Apache Permissions](resources/13.png)
+![Apache Permissions](resources/10.png)
 
 #### Instalación y Configuración de Certificados SSL
 
@@ -151,8 +202,9 @@ sudo certbot-3 certonly --standalone -d appivanarep.duckdns.org \
   -m tu-email@ejemplo.com --agree-tos --no-eff-email
 ```
 
-![SSL Certificate Installation](resources/14.png)
-![SSL Certificate Details](resources/15.png)
+![SSL Certificate Installation](resources/13.png)
+![SSL Certificate Details](resources/12.png)
+![SSL Certificate Details](resources/11.png)
 
 #### Configuración SSL en Apache
 
@@ -162,7 +214,9 @@ sudo nano /etc/httpd/conf.d/ssl.conf
 
 Actualizar las rutas de certificados:
 
-![SSL Configuration](resources/16.png)
+![SSL Configuration](resources/42.png)
+![SSL Configuration](resources/43.png)
+
 
 #### Verificación del Servicio
 
@@ -172,11 +226,11 @@ sudo systemctl enable httpd
 sudo systemctl status httpd
 ```
 
-![Apache Service Status](resources/17.png)
+![Apache Service Status](resources/8.png)
 
 Verificación en navegador:
 
-![HTTPS Verification](resources/18.png)
+![HTTPS Verification](resources/15.png)
 
 ### 6. Configuración del Servidor Spring
 
@@ -216,6 +270,7 @@ sudo certbot-3 certonly --standalone \
 ```
 
 ![Spring SSL Certificate](resources/21.png)
+![Spring SSL Certificate](resources/23.png)
 
 #### Generación del Proyecto Spring
 
@@ -227,13 +282,28 @@ mvn archetype:generate \
   -DinteractiveMode=false
 ```
 
-![Project Scaffolding](resources/22.png)
+![Project Scaffolding](resources/25.png)
 
 #### Configuración del Proyecto
 
 1. **Modificación del pom.xml**
 
-![POM Configuration](resources/23.png)
+```
+<properties>
+  <maven.compiler.source>17</maven.compiler.source>
+  <maven.compiler.target>17</maven.compiler.target>
+</properties>
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.11.0</version>
+    </plugin>
+  </plugins>
+</build>
+
+```
 
 2. **Creación de la clase Application**
 
