@@ -2,7 +2,12 @@
 
 ## Descripción del Proyecto
 
-Este proyecto implementa una aplicación segura y escalable desplegada en AWS, siguiendo las mejores prácticas de arquitectura empresarial y seguridad. La aplicación está compuesta por dos servidores independientes que trabajan en conjunto para proporcionar una solución integral y segura.
+Este proyecto implementa una aplicación segura y escalable desplegada en AWS, siguiendo lo aprendido en clase de arquitectura empresarial y seguridad. La aplicación está compuesta por dos servidores independientes que trabajan en conjunto para proporcionar una solución integral y segura.
+
+## Video Demostrativo
+```
+https://pruebacorreoescuelaingeduco-my.sharepoint.com/:v:/g/personal/juan_brodriguez_mail_escuelaing_edu_co/EaN2KJqnoaBMgMzT5mDSQXQBou8wlu0aGSILLLx0Q9IEQA?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=Lcaikk
+```
 
 ### Componentes de la Arquitectura
 
@@ -27,11 +32,6 @@ Este proyecto implementa una aplicación segura y escalable desplegada en AWS, s
 - **Cliente Asíncrono**: Implementación HTML+JavaScript con técnicas asíncronas para optimizar el rendimiento
 - **Autenticación Segura**: Sistema de login con almacenamiento seguro de contraseñas mediante hashing
 - **Despliegue en AWS**: Infraestructura segura y confiable en la nube de Amazon
-
-## Video Demostrativo
-```
-https://pruebacorreoescuelaingeduco-my.sharepoint.com/:v:/g/personal/juan_brodriguez_mail_escuelaing_edu_co/EaN2KJqnoaBMgMzT5mDSQXQBou8wlu0aGSILLLx0Q9IEQA?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=Lcaikk
-```
 
 ## Requisitos del Sistema
 
