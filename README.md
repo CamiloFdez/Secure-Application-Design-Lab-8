@@ -45,8 +45,8 @@ https://pruebacorreoescuelaingeduco-my.sharepoint.com/:v:/g/personal/juan_brodri
 
 ```
 ArepSecureApplicationDesign/
-├── README.md                 # Documentación principal del proyecto
-├── resources/               # Imágenes y recursos de documentación
+├── README.md                 
+├── resources/               
 │   ├── 1.png - 43.png      # Screenshots del proceso de configuración
 ├── springserver/           # Aplicación Spring Boot backend
 │   ├── pom.xml            # Configuración Maven
@@ -66,7 +66,7 @@ ArepSecureApplicationDesign/
 │       │       └── UserService.java       # Lógica de negocio
 │       └── resources/
 │           └── application.properties     # Configuración Spring Boot
-└── .gitignore              # Archivos excluidos del control de versiones
+└── .gitignore              
 ```
 
 ## Instalación y Configuración
@@ -307,7 +307,33 @@ mvn archetype:generate \
 
 2. **Creación de la clase Application**
 
-![Application Class](resources/24.png)
+Crear la clase principal de Spring Boot en `src/main/java/com/arep/springserver/App.java`:
+
+```java
+package com.arep.springserver;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@SpringBootApplication
+public class App {
+
+    public static void main(String[] args) {
+        SpringApplication.run(App.class, args);
+        System.out.println("Hello World!");
+    }
+
+    @RestController
+    public static class HelloController {
+        @GetMapping("/hello")
+        public String hello() {
+            return "Hello from Spring Boot!";
+        }
+    }
+}
+```
 
 3. **Compilación inicial**
 
@@ -337,16 +363,56 @@ sudo openssl pkcs12 -export \
   -password pass:root1234
 ```
 
-![Keystore Creation](resources/26.png)
 
 3. **Configuración application.properties**
+
+Crear el directorio de recursos y el archivo de configuración:
 
 ```bash
 mkdir -p src/main/resources
 nano src/main/resources/application.properties
 ```
 
-![Application Properties](resources/27.png)
+Contenido del archivo `application.properties`:
+
+```properties
+# Configuración del servidor
+server.port=8443
+server.address=0.0.0.0
+
+# Configuración SSL/TLS
+server.ssl.enabled=true
+server.ssl.key-store=file:/opt/springserver/keystore.p12
+server.ssl.key-store-type=PKCS12
+server.ssl.key-store-password=root1234
+server.ssl.key-alias=tomcat
+
+# Configuración de Base de Datos H2
+spring.datasource.url=jdbc:h2:file:/opt/springserver/data/testdb
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+# Configuración JPA/Hibernate
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=update
+
+# Configuración H2 Console
+spring.h2.console.enabled=true
+spring.h2.console.settings.web-allow-others=true
+
+# Configuración de Logging
+logging.level.org.springframework=INFO
+```
+
+**Descripción de las configuraciones:**
+
+- `server.port=8443`: Puerto estándar para HTTPS
+- `server.ssl.enabled=true`: Habilita SSL/TLS en el servidor
+- `server.ssl.key-store`: Ruta al archivo keystore con certificados
+- `spring.datasource.url`: Base de datos H2 persistente
+- `spring.jpa.hibernate.ddl-auto=update`: Actualización automática de tablas
+- `spring.h2.console.enabled=true`: Habilita consola web de H2
 
 #### Estructura de la API
 
@@ -360,8 +426,6 @@ mkdir -p src/main/java/com/arep/springserver/security
 mkdir -p src/main/java/com/arep/springserver/service
 ```
 
-![Project Structure](resources/28.png)
-
 #### Implementación de Componentes
 
 1. **Controllers**: AuthController.java y SecureController.java
@@ -370,13 +434,16 @@ mkdir -p src/main/java/com/arep/springserver/service
 4. **Security**: SecurityConfig.java
 5. **Service**: UserService.java
 
-![Controller Implementation](resources/29.png)
 
 #### Configuración Base de Datos H2
 
-Actualización de application.properties con configuración H2:
+La configuración de H2 ya está incluida en el archivo `application.properties` mostrado anteriormente. Esta configuración permite:
 
-![H2 Configuration](resources/30.png)
+- Base de datos persistente en `/opt/springserver/data/testdb`
+- Consola web accesible para administración
+- Actualización automática del esquema de base de datos
+
+![H2 Configuration](resources/34.png)
 
 #### Compilación y Ejecución
 
@@ -384,8 +451,6 @@ Actualización de application.properties con configuración H2:
 mvn -U clean package -DskipTests
 java -jar target/*.jar
 ```
-
-![Final Compilation](resources/31.png)
 
 ## Pruebas y Verificación
 
@@ -395,6 +460,13 @@ java -jar target/*.jar
 2. **Autenticación con Basic Auth**
 
 ![Postman Tests](resources/32.png)
+![Postman Tests](resources/31.png)
+![Postman Tests](resources/32.png)
+![Postman Tests](resources/30.png)
+![Postman Tests](resources/16.png)
+![Postman Tests](resources/33.png)
+
+
 
 ### Pruebas en Navegador
 
@@ -413,22 +485,9 @@ Acceso a consola H2:
 
 ![Database Verification](resources/34.png)
 
-## Documentación Técnica
-
-### Arquitectura de Seguridad
-
-La aplicación implementa múltiples capas de seguridad:
-
-1. **Capa de Transporte**: Cifrado TLS/HTTPS en ambos servidores
-2. **Capa de Aplicación**: Autenticación y autorización con Spring Security
-3. **Capa de Datos**: Hashing seguro de contraseñas con BCrypt
-4. **Capa de Infraestructura**: Grupos de seguridad AWS configurados apropiadamente
-
-
 ## Autor
 
 **Juan Beltrán** - [juan-beltran0518](https://github.com/juan-beltran0518)
-
 
 
 ## Referencias
