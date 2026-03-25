@@ -28,7 +28,20 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody LoginRequest req) {
+        if (userService.validateCredentials(req.username, req.password)) {
+            return ResponseEntity.ok("Login exitoso");
+        }
+        return ResponseEntity.status(401).body("Credenciales invalidas");
+    }
+
     public static class RegisterRequest {
+        public String username;
+        public String password;
+    }
+
+    public static class LoginRequest {
         public String username;
         public String password;
     }
