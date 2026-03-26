@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Secure App API Tester</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<main class="container">
+		<h1>Secure Application - API Frontend Basico</h1>
+		<p class="subtitle">Login primero, luego pruebas todos los endpoints sin volver a pedir credenciales.</p>
+
+		<section class="card" id="setupCard">
+			<h2>Configuracion</h2>
+			<label for="baseUrl">Base URL API</label>
+			<input id="baseUrl" type="text" placeholder="http://localhost:8080" value="http://localhost:8080">
+			<small>Si sirves este frontend con Apache, deja el backend Spring en esta URL.</small>
+		</section>
+
+		<section id="authView">
+			<section class="card grid-two">
+				<div>
+					<h2>Registro</h2>
+					<label for="regUser">Usuario</label>
+					<input id="regUser" type="text" placeholder="nuevoUsuario">
+					<label for="regPass">Password</label>
+					<input id="regPass" type="password" placeholder="********">
+					<button id="btnRegister">Crear usuario</button>
+				</div>
+				<div>
+					<h2>Login</h2>
+					<label for="loginUser">Usuario</label>
+					<input id="loginUser" type="text" placeholder="usuarioExistente">
+					<label for="loginPass">Password</label>
+					<input id="loginPass" type="password" placeholder="********">
+					<button id="btnLogin">Iniciar sesion</button>
+				</div>
+			</section>
+			<section class="card">
+				<h2>Estado autenticacion</h2>
+				<p id="authStatus">No autenticado</p>
+			</section>
+		</section>
+
+		<section id="appView" class="hidden">
+			<section class="card">
+				<div class="header-row">
+					<h2>Panel de endpoints</h2>
+					<button id="btnLogout" class="danger">Cerrar sesion</button>
+				</div>
+				<p class="muted" id="sessionInfo"></p>
+			</section>
+
+			<section class="card">
+				<h2>POST publicos</h2>
+				<div class="actions">
+					<button id="btnRegisterInApp">POST /api/auth/register</button>
+					<button id="btnLoginRefresh">POST /api/auth/login (revalidar)</button>
+				</div>
+			</section>
+
+			<section class="card">
+				<h2>GET protegidos</h2>
+				<div class="actions">
+					<button data-endpoint="/api/secure/hello" class="secure-btn">GET /api/secure/hello</button>
+					<button data-endpoint="/api/secure/profile" class="secure-btn">GET /api/secure/profile</button>
+					<button data-endpoint="/api/secure/users" class="secure-btn">GET /api/secure/users</button>
+					<button data-endpoint="/api/secure/status" class="secure-btn">GET /api/secure/status</button>
+				</div>
+				<div class="inline-control">
+					<input id="userId" type="number" min="1" placeholder="ID usuario">
+					<button id="btnUserById">GET /api/secure/users/{id}</button>
+				</div>
+			</section>
+		</section>
+
+		<section class="card">
+			<h2>Respuesta</h2>
+			<pre id="output">Aqui veras status y body de cada request.</pre>
+		</section>
+	</main>
+
+	<script>
+		const output = document.getElementById("output");
+		const authStatus = document.getElementById("authStatus");
+		const authView = document.getElementById("authView");
+		const appView = document.getElementById("appView");
+		const sessionInfo = document.getElementById("sessionInfo");
+
+		function getBaseUrl() {
+			const value = document.getElementById("baseUrl").value.trim();
+			return value || globalThis.location.origin;
+		}
+
+		function parseJsonOrText(text) {
+			try {
+				return JSON.parse(text);
+			} catch {
+				return text;
+			}
+		}
+
+		function setSession(username, password) {
+			sessionStorage.setItem("authUser", username);
+			sessionStorage.setItem("authPass", password);
+		}
+
+		function clearSession() {
+			sessionStorage.removeItem("authUser");
+			sessionStorage.removeItem("authPass");
+		}
+
+		function getAuthHeaderFromSession() {
+			const user = sessionStorage.getItem("authUser");
+			const pass = sessionStorage.getItem("authPass");
+			if (!user || !pass) {
+				return null;
+			}
+			return "Basic " + btoa(user + ":" + pass);
+		}
+
+		function enterAppView() {
+			const user = sessionStorage.getItem("authUser");
+			authView.classList.add("hidden");
+			appView.classList.remove("hidden");
+			authStatus.textContent = "Autenticado como " + user;
+			sessionInfo.textContent = "Sesion activa con usuario: " + user;
+		}
+
+		function enterAuthView() {
+			authView.classList.remove("hidden");
+			appView.classList.add("hidden");
+			authStatus.textContent = "No autenticado";
+			sessionInfo.textContent = "";
+		}
+
+		function restoreSessionIfAny() {
+			const auth = getAuthHeaderFromSession();
+			if (auth) {
+				enterAppView();
+			} else {
+				enterAuthView();
+			}
+		}
+
+		async function sendRequest(path, options = {}, requiresAuth = false) {
+			const baseUrl = getBaseUrl();
+			const headers = new Headers(options.headers || {});
+
+			if (requiresAuth) {
+				const auth = getAuthHeaderFromSession();
+				if (!auth) {
+					output.textContent = "No hay sesion activa. Inicia sesion primero.";
+					enterAuthView();
+					return null;
+				}
+				headers.set("Authorization", auth);
+			}
+
+			const requestOptions = { ...options, headers };
+
+			try {
+				const res = await fetch(baseUrl + path, requestOptions);
+				const text = await res.text();
+				const parsed = parseJsonOrText(text);
+
+				output.textContent = JSON.stringify({
+					status: res.status,
+					ok: res.ok,
+					endpoint: path,
+					response: parsed
+				}, null, 2);
+
+				if (requiresAuth && res.status === 401) {
+					clearSession();
+					enterAuthView();
+					output.textContent += "\n\nSesion expirada o credenciales invalidas. Vuelve a iniciar sesion.";
+				}
+
+				return res;
+			} catch (err) {
+				output.textContent = "Error de red: " + err.message;
+				return null;
+			}
+		}
+
+		async function registerFromInputs() {
+			const username = document.getElementById("regUser").value.trim();
+			const password = document.getElementById("regPass").value.trim();
+
+			if (!username || !password) {
+				output.textContent = "Completa usuario y password para registrar.";
+				return;
+			}
+
+			const res = await sendRequest("/api/auth/register", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ username, password })
+			});
+
+			if (res && res.ok) {
+				document.getElementById("loginUser").value = username;
+				document.getElementById("loginPass").value = password;
+			}
+		}
+
+		async function loginFromInputs() {
+			const username = document.getElementById("loginUser").value.trim();
+			const password = document.getElementById("loginPass").value.trim();
+
+			if (!username || !password) {
+				output.textContent = "Completa usuario y password para login.";
+				return;
+			}
+
+			const res = await sendRequest("/api/auth/login", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ username, password })
+			});
+
+			if (res && res.ok) {
+				setSession(username, password);
+				enterAppView();
+			}
+		}
+
+		async function loginRefresh() {
+			const user = sessionStorage.getItem("authUser");
+			const pass = sessionStorage.getItem("authPass");
+
+			if (!user || !pass) {
+				output.textContent = "No hay sesion guardada para revalidar.";
+				enterAuthView();
+				return;
+			}
+
+			const res = await sendRequest("/api/auth/login", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ username: user, password: pass })
+			});
+
+			if (res && !res.ok) {
+				clearSession();
+				enterAuthView();
+			}
+		}
+
+		document.getElementById("btnRegister").addEventListener("click", registerFromInputs);
+		document.getElementById("btnLogin").addEventListener("click", loginFromInputs);
+		document.getElementById("btnRegisterInApp").addEventListener("click", registerFromInputs);
+		document.getElementById("btnLoginRefresh").addEventListener("click", loginRefresh);
+
+		document.getElementById("btnLogout").addEventListener("click", () => {
+			clearSession();
+			enterAuthView();
+			output.textContent = "Sesion cerrada.";
+		});
+
+		document.querySelectorAll(".secure-btn").forEach((btn) => {
+			btn.addEventListener("click", () => {
+				const endpoint = btn.dataset.endpoint;
+				sendRequest(endpoint, { method: "GET" }, true);
+			});
+		});
+
+		document.getElementById("btnUserById").addEventListener("click", () => {
+			const id = document.getElementById("userId").value;
+			if (!id) {
+				output.textContent = "Debes ingresar un id de usuario.";
+				return;
+			}
+			sendRequest("/api/secure/users/" + id, { method: "GET" }, true);
+		});
+
+		restoreSessionIfAny();
+	</script>
+</body>
+</html>
