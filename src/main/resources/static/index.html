@@ -14,8 +14,12 @@
 		<section class="card" id="setupCard">
 			<h2>Configuracion</h2>
 			<label for="baseUrl">Base URL API</label>
-			<input id="baseUrl" type="text" placeholder="http://localhost:8080" value="http://localhost:8080">
-			<small>Si sirves este frontend con Apache, deja el backend Spring en esta URL.</small>
+			<input id="baseUrl" type="text" placeholder="http://ec2-52-90-198-182.compute-1.amazonaws.com:9090" value="http://ec2-52-90-198-182.compute-1.amazonaws.com:9090">
+			<div class="actions">
+				<button id="btnUseEc2" type="button">Usar backend EC2</button>
+				<button id="btnUseLocalhost" type="button">Usar localhost</button>
+			</div>
+			<small>Backend por defecto: ec2-52-90-198-182.compute-1.amazonaws.com:9090. Si tu frontend esta en HTTPS, usa proxy /api en Apache para evitar bloqueo del navegador por mixed-content.</small>
 		</section>
 
 		<section id="authView">
@@ -87,9 +91,13 @@
 		const authView = document.getElementById("authView");
 		const appView = document.getElementById("appView");
 		const sessionInfo = document.getElementById("sessionInfo");
+		const baseUrlInput = document.getElementById("baseUrl");
+
+		const LOCAL_BASE_URL = "http://localhost:9090";
+		const EC2_BASE_URL = "http://ec2-52-90-198-182.compute-1.amazonaws.com:9090";
 
 		function getBaseUrl() {
-			const value = document.getElementById("baseUrl").value.trim();
+			const value = baseUrlInput.value.trim();
 			return value || globalThis.location.origin;
 		}
 
@@ -253,6 +261,14 @@
 		document.getElementById("btnLogin").addEventListener("click", loginFromInputs);
 		document.getElementById("btnRegisterInApp").addEventListener("click", registerFromInputs);
 		document.getElementById("btnLoginRefresh").addEventListener("click", loginRefresh);
+		document.getElementById("btnUseEc2").addEventListener("click", () => {
+			baseUrlInput.value = EC2_BASE_URL;
+			output.textContent = "Base URL actualizada a backend EC2.";
+		});
+		document.getElementById("btnUseLocalhost").addEventListener("click", () => {
+			baseUrlInput.value = LOCAL_BASE_URL;
+			output.textContent = "Base URL actualizada a localhost.";
+		});
 
 		document.getElementById("btnLogout").addEventListener("click", () => {
 			clearSession();
