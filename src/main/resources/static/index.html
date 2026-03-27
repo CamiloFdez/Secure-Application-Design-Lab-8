@@ -14,12 +14,12 @@
 		<section class="card" id="setupCard">
 			<h2>Configuracion</h2>
 			<label for="baseUrl">Base URL API</label>
-			<input id="baseUrl" type="text" placeholder="http://ec2-52-90-198-182.compute-1.amazonaws.com:9090" value="http://ec2-52-90-198-182.compute-1.amazonaws.com:9090">
+			<input id="baseUrl" type="text" placeholder="https://apachefrontendarep.duckdns.org" value="https://apachefrontendarep.duckdns.org">
 			<div class="actions">
-				<button id="btnUseEc2" type="button">Usar backend EC2</button>
+				<button id="btnUseEc2" type="button">Usar proxy HTTPS (recomendado)</button>
 				<button id="btnUseLocalhost" type="button">Usar localhost</button>
 			</div>
-			<small>Backend por defecto: ec2-52-90-198-182.compute-1.amazonaws.com:9090. Si tu frontend esta en HTTPS, usa proxy /api en Apache para evitar bloqueo del navegador por mixed-content.</small>
+			<small>En despliegue HTTPS usa la misma URL del frontend (proxy /api en Apache). En local usa http://localhost:9090.</small>
 		</section>
 
 		<section id="authView">
@@ -94,11 +94,20 @@
 		const baseUrlInput = document.getElementById("baseUrl");
 
 		const LOCAL_BASE_URL = "http://localhost:9090";
-		const EC2_BASE_URL = "http://ec2-52-90-198-182.compute-1.amazonaws.com:9090";
+		const PROXY_HTTPS_BASE_URL = globalThis.location.origin;
 
 		function getBaseUrl() {
 			const value = baseUrlInput.value.trim();
-			return value || globalThis.location.origin;
+			if (!value) {
+				return globalThis.location.origin;
+			}
+
+			if (globalThis.location.protocol === "https:" && value.startsWith("http://")) {
+				output.textContent = "Bloqueado por mixed-content. En HTTPS usa la URL HTTPS del frontend/proxy o una API HTTPS.";
+				return globalThis.location.origin;
+			}
+
+			return value;
 		}
 
 		function parseJsonOrText(text) {
@@ -262,8 +271,8 @@
 		document.getElementById("btnRegisterInApp").addEventListener("click", registerFromInputs);
 		document.getElementById("btnLoginRefresh").addEventListener("click", loginRefresh);
 		document.getElementById("btnUseEc2").addEventListener("click", () => {
-			baseUrlInput.value = EC2_BASE_URL;
-			output.textContent = "Base URL actualizada a backend EC2.";
+			baseUrlInput.value = PROXY_HTTPS_BASE_URL;
+			output.textContent = "Base URL actualizada a proxy HTTPS del frontend.";
 		});
 		document.getElementById("btnUseLocalhost").addEventListener("click", () => {
 			baseUrlInput.value = LOCAL_BASE_URL;
